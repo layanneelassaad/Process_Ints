@@ -1,0 +1,90 @@
+#include <ctype.h> 
+#include <errno.h> 
+#include <stdbool.h> 
+#include <stdio.h> 
+#include <stdlib.h> 
+#include <string.h> 
+#define BUFSIZE 128 
+
+/**
+* Determines whether or not the input string represents a valid integer.
+* A valid integer has an optional minus sign, followed by a series of digits * [0-9].
+*/
+bool is_integer(char *input) {
+      int start = 0, len = strlen(input); 
+      if (len >= 1 && input[0] == '-') {
+         if (len < 2) { 
+            return false;
+         }
+      start = 1; 
+     }
+     for (int i = start; i < len; i++) { 
+         if (!isdigit(input[i])) {
+            return false; 
+        }
+     }
+     return len > 0; 
+}
+
+
+/**
+* Takes as input a string and an in-out parameter value.
+* If the string can be parsed, the integer value is assigned to the value * parameter and true is returned.
+* Otherwise, false is returned and the best attempt to modify the value * parameter is made.
+*/
+bool get_integer(char *input, int *value) { 
+   long long long_long_i;
+   if (sscanf(input, "%lld", &long_long_i) != 1) {
+        fprintf(stderr, "Error: Cannot convert %s to integer.\n", input);
+        return false; 
+   }
+   *value = (int)long_long_i;
+   if (long_long_i != (long long)*value) {
+      fprintf(stderr, "Warning: Integer overflow with '%s'.\n", input);
+      return false; 
+    }
+   return true; 
+}
+int main(int argc, char *argv[]) { 
+    if (argc != 3) {
+       fprintf(stderr, "Usage: %s <infile> <outfile>\n", argv[0]);
+      return EXIT_FAILURE; 
+     }
+     char buf[BUFSIZE];
+     FILE *infile = fopen(argv[1], "r"); 
+     if (infile == NULL) {
+         fprintf(stderr, "Error: Cannot open input file '%s'. %s.\n", argv[1], strerror(errno));
+         return EXIT_FAILURE; 
+     }
+     FILE *outfile = fopen(argv[2], "w"); 
+     if (outfile == NULL) {
+        fprintf(stderr, "Error: Cannot open output file '%s'.%s.\n", argv[2], strerror(errno));
+        return EXIT_FAILURE; 
+    }
+int num_ints = 0;
+long sum = 0;
+
+
+/* Reads at most n-1 characters from infile until a newline is found. The
+characters up to and including the newline are stored in buf. The buffer
+is terminated with a '\0'. */
+while (fgets(buf, BUFSIZE, infile)) { // Replace the '\n' with '\0'.
+     char *eoln = strchr(buf, '\n');
+     if (eoln != NULL) {
+        *eoln = '\0'; 
+     }
+    if (is_integer(buf)) { 
+       int val;
+       if (get_integer(buf, &val)) { 
+         num_ints++;
+         sum += val;
+       } 
+    }
+}
+fprintf(outfile, "Integers processed : %d\n", num_ints);
+fprintf(outfile, "Sum: %ld\n", sum);
+fprintf(outfile, "Average: %.2f\n", (double)sum / num_ints);
+fclose(infile); 
+fclose(outfile);
+return EXIT_SUCCESS;
+}
